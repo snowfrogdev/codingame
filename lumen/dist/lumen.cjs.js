@@ -4,21 +4,18 @@ var ROOM_SIZE = parseInt(readline());
 var LIGHT_STRENGTH = parseInt(readline());
 var room = [];
 for (var i = 0; i < ROOM_SIZE; i++) {
-    var LINE = readline();
-    room.push(LINE.replace(/\s/g, ''));
-}
-var mappedRoom = room.map(function (row, i) {
+    var LINE = readline().replace(/\s/g, '');
     var mappedRow = [];
     for (var j = 0; j < ROOM_SIZE; j++) {
-        if (row.charAt(j) === 'C') {
+        if (LINE.charAt(j) === 'C') {
             mappedRow.push(LIGHT_STRENGTH);
         }
         else {
             mappedRow.push(0);
         }
     }
-    return mappedRow;
-});
+    room.push(mappedRow);
+}
 var Position = /** @class */ (function () {
     function Position(x, y) {
         this.x = x;
@@ -40,15 +37,15 @@ function mapRoom(lightStrength) {
     if (!lightStrength) {
         return;
     }
-    mappedRoom.forEach(function (row, i) {
+    room.forEach(function (row, i) {
         var _loop_1 = function (j) {
             if (row[j] === lightStrength) {
                 findAdjacentSpotFunctions.forEach(function (findAdjacentSpot) {
                     var spot = findAdjacentSpot(j, i);
                     if (spot.y >= 0 && spot.x >= 0 && spot.y < ROOM_SIZE && spot.x < ROOM_SIZE) {
-                        var adjacentSpot = mappedRoom[spot.y][spot.x];
+                        var adjacentSpot = room[spot.y][spot.x];
                         if (adjacentSpot < lightStrength - 1)
-                            mappedRoom[spot.y][spot.x] = lightStrength - 1;
+                            room[spot.y][spot.x] = lightStrength - 1;
                     }
                 });
             }
@@ -60,7 +57,7 @@ function mapRoom(lightStrength) {
     mapRoom(lightStrength - 1);
 }
 mapRoom(LIGHT_STRENGTH);
-var answer = mappedRoom.reduce(function (count, row) {
+var answer = room.reduce(function (count, row) {
     for (var _i = 0, row_1 = row; _i < row_1.length; _i++) {
         var spot = row_1[_i];
         if (spot === 0) {
@@ -70,19 +67,3 @@ var answer = mappedRoom.reduce(function (count, row) {
     return count;
 }, 0);
 console.log(answer);
-/*
-Example for the light spread N = 5, L = 3:
-5
-3
-C X X X C
-X X X X X
-X X X X X
-X X X X X
-C X X X C
-
-3 2 1 2 3
-2 2 1 2 2
-1 1 1 1 1
-2 2 1 2 2
-3 2 1 2 3
-*/
