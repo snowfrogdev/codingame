@@ -1,0 +1,23 @@
+{
+    "name": "max-rect",
+    "version": "1.0.0",
+    "main": "dist/max-rect.cjs.js",
+    "module": "dist/max-rect.esm.js",
+    "browser": "dist/max-rect.umd.js",
+    "devDependencies": {
+        "rollup": "^1.0.0",
+        "rollup-plugin-commonjs": "^9.2.0",
+        "rollup-plugin-node-resolve": "^4.0.0",
+        "rollup-plugin-typescript": "^1.0.0",
+        "ts-node": "^7.0.1",
+        "tslib": "^1.9.3",
+        "typescript": "^3.2.2"
+    },
+    "scripts": {
+        "build": "rollup -c",
+        "dev": "rollup -c -w"
+    },
+    "files": [
+        "dist"
+    ]
+}
