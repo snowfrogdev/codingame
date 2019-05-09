@@ -1,0 +1,23 @@
+{
+    "name": "order-of-succession",
+    "version": "1.0.0",
+    "main": "dist/order-of-succession.cjs.js",
+    "module": "dist/order-of-succession.esm.js",
+    "browser": "dist/order-of-succession.umd.js",
+    "devDependencies": {
+        "rollup": "^1.0.0",
+        "rollup-plugin-commonjs": "^9.2.0",
+        "rollup-plugin-node-resolve": "^4.0.0",
+        "rollup-plugin-typescript": "^1.0.0",
+        "ts-node": "^7.0.1",
+        "tslib": "^1.9.3",
+        "typescript": "^3.2.2"
+    },
+    "scripts": {
+        "build": "rollup -c",
+        "dev": "rollup -c -w"
+    },
+    "files": [
+        "dist"
+    ]
+}
