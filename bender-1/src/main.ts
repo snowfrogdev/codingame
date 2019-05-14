@@ -1,13 +1,5 @@
 declare function readline(): string
 
-const [L, C] = readline().split(' ').map(Number);
-
-const cityMap: string[][] = []
-for (let i = 0; i < L; i++) {
-    const row = readline();
-    cityMap.push(Array.from(row))
-}
-
 class Position {
     [key: string]: any
     constructor(private x_: number, private y_: number) { }
@@ -19,16 +11,16 @@ class Position {
         return this.y_
     }
     get north() {
-        return new Position(this.x_, this.y_ -= 1)
+        return new Position(this.x_, this.y_ - 1)
     }
     get east() {
-        return new Position(this.x_ += 1, this.y_)
+        return new Position(this.x_ + 1, this.y_)
     }
     get south() {
-        return new Position(this.x_, this.y_ += 1)
+        return new Position(this.x_, this.y_ + 1)
     }
     get west() {
-        return new Position(this.x_ -= 1, this.y_)
+        return new Position(this.x_ - 1, this.y_)
     }
 }
 
@@ -53,13 +45,46 @@ class City {
 }
 
 class Bender {
-    private moves_: string[] = []
+    readonly moves_: string[] = []
     private facingDirection_: string = 'south'
-    private directionPriorities_ = ['south', 'east', 'north', 'west']
+    private DIRECTION_PRIORITIES_ = ['south', 'east', 'north', 'west']
+    private position_: Position
+    isDead = false
 
-    constructor(private city_: City, private position_: Position) {}
+    constructor(private city_: City, ) {
+        const position = this.city_.findSymbol('@')
+        if (!position) {
+            throw new Error('No starting positon')
+        }
+        this.position_ = position
+    }
     move(): void {
-            
+        const facingSymbol = this.lookAhead()
+
+        if (facingSymbol === 'X' || facingSymbol === '#') {
+            for (const direction of this.DIRECTION_PRIORITIES_) {
+                switch (this.city_.getSymbolAtPosition(this.position_[direction])) {
+                    case 'X':
+                    case '#':
+                        break
+                    default:
+                    this.position_ = this.position_[direction]
+                    this.facingDirection_ = direction
+                    this.moves_.push(direction)
+                    return
+                }
+            }
+        }
+
+        if (facingSymbol === '$') {
+            this.position_ = this.position_[this.facingDirection_]
+            this.moves_.push(this.facingDirection_)
+            this.isDead = true
+            return
+        }
+
+        this.position_ = this.position_[this.facingDirection_]
+        this.moves_.push(this.facingDirection_)
     }
 
     lookAhead(): string {
@@ -68,7 +93,29 @@ class Bender {
 
     printMoves(): void {
         this.moves_.forEach(move => {
-            console.log(move)
+            console.log(move.toUpperCase())
         });
     }
 }
+
+export const main = (readline: () => string) => {
+    const [L, C] = readline().split(' ').map(Number);
+
+    const cityMap: string[][] = []
+    for (let i = 0; i < L; i++) {
+        const row = readline();
+        cityMap.push(Array.from(row))
+    }
+
+    const city = new City(cityMap)
+    const bender = new Bender(city)
+
+    while (!bender.isDead) {
+        bender.move()
+    }
+    bender.printMoves()
+    return bender.moves_
+}
+
+// main(readline)
+

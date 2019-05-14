@@ -10,7 +10,9 @@
             "name": "Jest All File",
             "program": "${workspaceFolder}/node_modules/.bin/jest",
             "args": [
-                "--runInBand"
+                "--runInBand",
+                "--coverage",
+                "false"
             ],
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen",
