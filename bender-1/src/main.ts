@@ -10,16 +10,16 @@ class Position {
     get y() {
         return this.y_
     }
-    get north() {
+    get NORTH() {
         return new Position(this.x_, this.y_ - 1)
     }
-    get east() {
+    get EAST() {
         return new Position(this.x_ + 1, this.y_)
     }
-    get south() {
+    get SOUTH() {
         return new Position(this.x_, this.y_ + 1)
     }
-    get west() {
+    get WEST() {
         return new Position(this.x_ - 1, this.y_)
     }
 }
@@ -27,16 +27,17 @@ class Position {
 class City {
     constructor(readonly cityMap: string[][]) { }
 
-    public findSymbol(symbol: string): Position | null {
+    public findSymbol(symbol: string): Position[] {
+        const positions = []
         for (let i = 0; i < this.cityMap.length; i++) {
             const line = this.cityMap[i]
             for (let j = 0; j < line.length; j++) {
                 if (line[j] === symbol) {
-                    return new Position(j, i)
+                    positions.push(new Position(j, i))
                 }
             }
         }
-        return null
+        return positions
     }
 
     public getSymbolAtPosition(position: Position): string {
@@ -46,23 +47,41 @@ class City {
 
 class Bender {
     readonly moves_: string[] = []
-    private facingDirection_: string = 'south'
-    private DIRECTION_PRIORITIES_ = ['south', 'east', 'north', 'west']
+    private facingDirection_: string = 'SOUTH'
+    private DIRECTION_PRIORITIES_ = ['SOUTH', 'EAST', 'NORTH', 'WEST']
+    private INVERTED_DIRECTION_PRIORITIES_ = ['WEST', 'NORTH', 'EAST', 'SOUTH']
     private position_: Position
+    private teleporters_: Position[]
+    private isInverted_ = false
+    private inBreakerMode_ = false
+
     isDead = false
 
     constructor(private city_: City, ) {
         const position = this.city_.findSymbol('@')
-        if (!position) {
-            throw new Error('No starting positon')
-        }
-        this.position_ = position
+        this.position_ = position[0]
+        this.teleporters_ = this.city_.findSymbol('T')
     }
     move(): void {
         const facingSymbol = this.lookAhead()
 
-        if (facingSymbol === 'X' || facingSymbol === '#') {
-            for (const direction of this.DIRECTION_PRIORITIES_) {
+        if (facingSymbol === 'T') {
+            const positionToTeleportTo = this.teleporters_.find((teleporter) => {
+                const newPosition = this.position_[this.facingDirection_]
+                return !(teleporter.x === newPosition.x && teleporter.y === newPosition.y)
+            })
+
+            if (!positionToTeleportTo) {
+                throw new Error('OMG I cannot find the other teleporter')
+            }
+            this.position_ = positionToTeleportTo
+            this.moves_.push(this.facingDirection_)
+            return
+        }
+        
+        if ((facingSymbol === 'X' && !this.inBreakerMode_) || facingSymbol === '#') {
+            const directions = this.isInverted_ ? this.INVERTED_DIRECTION_PRIORITIES_ : this.DIRECTION_PRIORITIES_
+            for (const direction of directions) {
                 switch (this.city_.getSymbolAtPosition(this.position_[direction])) {
                     case 'X':
                     case '#':
@@ -76,15 +95,44 @@ class Bender {
             }
         }
 
-        if (facingSymbol === '$') {
-            this.position_ = this.position_[this.facingDirection_]
-            this.moves_.push(this.facingDirection_)
-            this.isDead = true
-            return
+        if (facingSymbol === 'X' && this.inBreakerMode_) {
+            const newPosition = this.position_[this.facingDirection_]
+            this.city_.cityMap[newPosition.y][newPosition.x] = ' '
         }
 
         this.position_ = this.position_[this.facingDirection_]
         this.moves_.push(this.facingDirection_)
+
+        if (facingSymbol === '$') {
+            this.isDead = true
+            return
+        }
+
+        switch (facingSymbol) {
+            case 'N':
+                this.facingDirection_ = 'NORTH'
+                break
+
+            case 'E':
+                this.facingDirection_ = 'EAST'
+                break
+
+            case 'S':
+                this.facingDirection_ = 'SOUTH'
+                break
+
+            case 'W':
+                this.facingDirection_ = 'WEST'
+                break
+            
+            case 'B':
+                this.inBreakerMode_ = !this.inBreakerMode_
+                break
+
+            case 'I':
+                this.isInverted_ = !this.isInverted_
+                break
+        }
     }
 
     lookAhead(): string {
@@ -93,7 +141,7 @@ class Bender {
 
     printMoves(): void {
         this.moves_.forEach(move => {
-            console.log(move.toUpperCase())
+            console.log(move)
         });
     }
 }
@@ -110,8 +158,17 @@ export const main = (readline: () => string) => {
     const city = new City(cityMap)
     const bender = new Bender(city)
 
+    let count = 0
     while (!bender.isDead) {
+        if (count > 10000) {
+            break
+        }
         bender.move()
+        count++
+    }
+    if (count > 10000) {
+        console.log('LOOP')
+        return bender.moves_
     }
     bender.printMoves()
     return bender.moves_
