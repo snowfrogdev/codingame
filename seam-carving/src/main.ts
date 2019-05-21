@@ -1,17 +1,6 @@
 declare function readline(): string
-/*
-export function makeStringFromReadline(readline: () => string): string {
-    let output: string = ''
-    while(true) {
-        const line = readline()
-        if(line === 'null') {
-            return output
-        }
-        output += line + '\n'
-    }
-}
-*/
 
+/*
 let imageFile: string = '' 
 imageFile += readline() + '\n'
 const inputs = readline()
@@ -22,8 +11,9 @@ imageFile += readline() + '\n'
 for (let i = 0; i < H; i++) {
     imageFile += readline() + '\n'
 }
+*/
 
-class Pixel {
+export class Pixel {
     constructor(private grayScaleValue_: number) { }
 }
 
@@ -39,24 +29,24 @@ export class PgmImage {
         })
     }
 
-    removeSeam(): string {
+    /*removeSeam(): string {
         this.pixels_.forEach((row, rowIndex )=> {
             row.forEach((pixel, columnIndex) => {
                 pixel = this.calculateEnergy(rowIndex, columnIndex)
             })
         })
-    }
+    }*/
 
-    private calculateEnergy(rowIndex: number, columnIndex: number): number {
-    /*
+    /*calculateEnergy(rowIndex: number, columnIndex: number): number {
+    
         dI/dx(x,y) = I(x+1,y) - I(x-1,y) if 0 < x < W-1
                 0                   otherwise (left/right borders)
         dI/dy(x,y) = I(x,y+1) - I(x,y-1) if 0 < y < H-1
                 0                   otherwise (top/bottom borders)
         E(x,y) = |dI/dx(x,y)| + |dI/dy(x,y)|
             (where |.| denotes the absolute value)
-    */
-    }
+    
+    }*/
 }
 
 
@@ -79,4 +69,4 @@ for (let i = 0; i < H; i++) {
 */
 
 
-console.log(imageFile);
+//console.log(imageFile);
