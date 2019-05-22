@@ -138,6 +138,45 @@ describe('Seam Carving', () => {
         expect(actual).toBe(expected)
     })
 
+    test('Height 4 & Width 3, -1', () => {
+        const input = 
+`P2
+3 4
+# 2
+255
+123 201 232
+84 36 218
+251 78 32
+89 63 124`        
+        const image = new PgmImage(input)
+
+        const actual = image.removeSeam()
+
+        const expected = '503'
+
+        expect(actual).toBe(expected)
+    })
+
+    xtest('Height 5 & Width 3, -1', () => {
+        const input = 
+`P2
+3 5
+# 2
+255
+123 201 232
+84 36 218
+251 78 32
+89 63 124
+68 206 74`        
+        const image = new PgmImage(input)
+
+        const actual = image.removeSeam()
+
+        const expected = '666'
+
+        expect(actual).toBe(expected)
+    })
+
     /*test('Height 8 & Width -1', () => {
         const input = 
 `P2
