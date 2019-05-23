@@ -97,7 +97,7 @@ describe('Seam Carving', () => {
 
         const actual = image.removeSeam()
 
-        const expected = '138'
+        const expected = '128'
 
         expect(actual).toBe(expected)
     })
@@ -115,7 +115,7 @@ describe('Seam Carving', () => {
 
         const actual = image.removeSeam()
 
-        const expected = '206'
+        const expected = '59'
 
         expect(actual).toBe(expected)
     })
@@ -133,7 +133,7 @@ describe('Seam Carving', () => {
 
         const actual = image.removeSeam()
 
-        const expected = '103'
+        const expected = '89'
 
         expect(actual).toBe(expected)
     })
@@ -152,12 +152,12 @@ describe('Seam Carving', () => {
 
         const actual = image.removeSeam()
 
-        const expected = '503'
+        const expected = '133'
 
         expect(actual).toBe(expected)
     })
 
-    xtest('Height 5 & Width 3, -1', () => {
+    test('Height 5 & Width 3, -1', () => {
         const input = 
 `P2
 3 5
@@ -172,12 +172,52 @@ describe('Seam Carving', () => {
 
         const actual = image.removeSeam()
 
-        const expected = '666'
+        const expected = '296'
 
         expect(actual).toBe(expected)
     })
 
-    /*test('Height 8 & Width -1', () => {
+    test('Height 5 & Width 4, -1', () => {
+        const input = 
+`P2
+4 5
+# 3
+255
+123 201 232 67
+84 36 218 42
+251 78 32 126
+89 63 124 22
+68 206 74 163`      
+        const image = new PgmImage(input)
+
+        const actual = image.removeSeam()
+
+        const expected = '116'
+
+        expect(actual).toBe(expected)
+    })
+
+    test('Height 5 & Width 5, -1', () => {
+        const input = 
+`P2
+5 5
+# 4
+255
+123 201 232 67 43
+84 36 218 42 174
+251 78 32 126 132
+89 63 124 22 231
+68 206 74 163 91`      
+        const image = new PgmImage(input)
+
+        const actual = image.removeSeam()
+
+        const expected = '187'
+
+        expect(actual).toBe(expected)
+    })
+
+    test('Height 8 & Width -1', () => {
         const input = 
 `P2
 30 8
@@ -229,7 +269,6 @@ describe('Seam Carving', () => {
         expect(actual).toBe(expected)
 
     })
-    */
 })
 
 
