@@ -45,24 +45,32 @@ export class PgmImage {
             this.computeGradientMagnitude_(pixels)
             this.computeCumulativeEnergy_(pixels)
 
-            const pathOfLeastEnergy = pixels[pixels.length - 1].reduce((p, c, x, array) => {
-                const current = { xIndex: x, cumulativeEnergy: c.cumulativeEnergy }
-                const sortedArray = [p, current].sort((a, b) => a.cumulativeEnergy - b.cumulativeEnergy)
-                return { xIndex: sortedArray[0].xIndex, cumulativeEnergy: sortedArray[0].cumulativeEnergy }
-            }, { xIndex: 0, cumulativeEnergy: Infinity })
+            const pathOfLeastEnergy = this.findParthOfLeastEnergy_(pixels)
 
             output += pathOfLeastEnergy.cumulativeEnergy.toString() + '\n'
 
-            let currentIndexToRemove = pathOfLeastEnergy.xIndex
-            let nextXIndexToRemove;
-            for (let y = pixels.length - 1; y >= 0; y--) {
-                nextXIndexToRemove = pixels[y][currentIndexToRemove].parentPixelColumnIndex_
-                pixels[y].splice(currentIndexToRemove, 1)
-                currentIndexToRemove = nextXIndexToRemove
-            }
+            this.removePathOfLeastEnergy_(pathOfLeastEnergy, pixels);
         }
 
         return output.trim()
+    }
+
+    private findParthOfLeastEnergy_(pixels: Pixel[][]) {
+        return pixels[pixels.length - 1].reduce((p, c, x, array) => {
+            const current = { xIndex: x, cumulativeEnergy: c.cumulativeEnergy };
+            const sortedArray = [p, current].sort((a, b) => a.cumulativeEnergy - b.cumulativeEnergy);
+            return { xIndex: sortedArray[0].xIndex, cumulativeEnergy: sortedArray[0].cumulativeEnergy };
+        }, { xIndex: 0, cumulativeEnergy: Infinity });
+    }
+
+    private removePathOfLeastEnergy_(pathOfLeastEnergy: { xIndex: number; cumulativeEnergy: number; }, pixels: Pixel[][]) {
+        let currentIndexToRemove = pathOfLeastEnergy.xIndex;
+        let nextXIndexToRemove;
+        for (let y = pixels.length - 1; y >= 0; y--) {
+            nextXIndexToRemove = pixels[y][currentIndexToRemove].parentPixelColumnIndex_;
+            pixels[y].splice(currentIndexToRemove, 1);
+            currentIndexToRemove = nextXIndexToRemove;
+        }
     }
 
     private computeCumulativeEnergy_(pixels: Pixel[][]) {
@@ -88,19 +96,6 @@ export class PgmImage {
                 const sortedArray = [northWest, northEast, north].sort((a, b) => a.cumulativeEnergy - b.cumulativeEnergy)
                 pixel.cumulativeEnergy = sortedArray[0].cumulativeEnergy + pixel.energy
                 pixel.parentPixelColumnIndex_ = sortedArray[0].xIndex
-
-                /*
-                let northWest = Infinity
-                let northEast = Infinity
-                if (x !== 0) {
-                    northWest = array[y - 1][x - 1].cumulativeEnergy                    
-                }
-                if (x !== row.length - 1) {
-                    northEast = array[y - 1][x + 1].cumulativeEnergy
-                }
-                const north = array[y - 1][x].cumulativeEnergy;
-                pixel.cumulativeEnergy = Math.min(northWest, north, northEast) + pixel.energy
-                */
             })
         })
     }
