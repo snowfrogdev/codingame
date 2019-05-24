@@ -45,7 +45,7 @@ export class PgmImage {
             this.computeGradientMagnitude_(pixels)
             this.computeCumulativeEnergy_(pixels)
 
-            const pathOfLeastEnergy = this.findParthOfLeastEnergy_(pixels)
+            const pathOfLeastEnergy = this.findPathOfLeastEnergy_(pixels)
 
             output += pathOfLeastEnergy.cumulativeEnergy.toString() + '\n'
 
@@ -55,12 +55,26 @@ export class PgmImage {
         return output.trim()
     }
 
-    private findParthOfLeastEnergy_(pixels: Pixel[][]) {
-        return pixels[pixels.length - 1].reduce((p, c, x, array) => {
-            const current = { xIndex: x, cumulativeEnergy: c.cumulativeEnergy };
-            const sortedArray = [p, current].sort((a, b) => a.cumulativeEnergy - b.cumulativeEnergy);
-            return { xIndex: sortedArray[0].xIndex, cumulativeEnergy: sortedArray[0].cumulativeEnergy };
-        }, { xIndex: 0, cumulativeEnergy: Infinity });
+    private findPathOfLeastEnergy_(pixels: Pixel[][]) {
+        return pixels[pixels.length - 1].reduce((p, c, x) => {
+            function findTopIndexOfPath(colIndex: number, row = pixels.length - 1): number {
+                const pixel = pixels[row][colIndex]
+                if (row === 0) {
+                    return colIndex
+                }
+                return findTopIndexOfPath(pixel.parentPixelColumnIndex_, row - 1)
+            }
+            const topIndex = findTopIndexOfPath(x)
+            const current = { xIndex: x, cumulativeEnergy: c.cumulativeEnergy, topIndex: topIndex }
+            
+            if (p.cumulativeEnergy === current.cumulativeEnergy) {
+                const sortedByTopIndex = [p, current].sort((a, b) => a.topIndex - b.topIndex)
+                return sortedByTopIndex[0]
+            }
+
+            const sortedByCumulativeEnergy = [p, current].sort((a, b) => a.cumulativeEnergy - b.cumulativeEnergy)
+            return sortedByCumulativeEnergy[0]
+        }, { xIndex: 0, cumulativeEnergy: Infinity, topIndex: 0 });
     }
 
     private removePathOfLeastEnergy_(pathOfLeastEnergy: { xIndex: number; cumulativeEnergy: number; }, pixels: Pixel[][]) {
@@ -114,9 +128,5 @@ export class PgmImage {
                 pixel.energy = Math.abs(xGradient) + Math.abs(yGradient)
             })
         })
-    }
-
-    private isWithinBounds(array: Pixel[][], y: number, row: Pixel[], x: number) {
-        return array[y + 1] !== undefined && array[y - 1] !== undefined && row[x + 1] !== undefined && row[x - 1] !== undefined
     }
 }
