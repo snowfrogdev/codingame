@@ -406,7 +406,7 @@ describe('Seam Carving', () => {
 
     })
 
-    test.only('Height 37 & Width -15', () => {
+    test('Height 37 & Width -15', () => {
         const input =
 `P2
 70 37

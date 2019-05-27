@@ -1,29 +1,4 @@
-class Pixel {
-    private energy_: number = 0
-    private cumulativeEnergy_: number = 0
-    private _parentPixelColumnIndex_: number = 0;
-
-    constructor(readonly grayscale: number) { }
-
-    get energy(): number {
-        return this.energy_
-    }
-    set energy(value: number) {
-        this.energy_ = value
-    }
-    get cumulativeEnergy(): number {
-        return this.cumulativeEnergy_;
-    }
-    set cumulativeEnergy(value: number) {
-        this.cumulativeEnergy_ = value;
-    }
-    get parentPixelColumnIndex_(): number {
-        return this._parentPixelColumnIndex_;
-    }
-    set parentPixelColumnIndex_(value: number) {
-        this._parentPixelColumnIndex_ = value;
-    }
-}
+import { Pixel } from "./pixel";
 
 export class PgmImage {
     private seams_: number[][] = []
@@ -47,6 +22,7 @@ export class PgmImage {
 
             const pathOfLeastEnergy = this.findPathOfLeastEnergy_(pixels)
 
+
             output += pathOfLeastEnergy.cumulativeEnergy.toString() + '\n'
 
             this.removePathOfLeastEnergy_(pathOfLeastEnergy, pixels);
@@ -58,7 +34,7 @@ export class PgmImage {
     private findPathOfLeastEnergy_(pixels: Pixel[][]) {
         return pixels[pixels.length - 1].reduce((p, c, x) => {
             function findTopIndexOfPath(colIndex: number, row = pixels.length - 1): number {
-                const pixel = pixels[row][colIndex]
+                const pixel = pixels[row][colIndex] 
                 if (row === 0) {
                     return colIndex
                 }
@@ -78,18 +54,19 @@ export class PgmImage {
     }
 
     private removePathOfLeastEnergy_(pathOfLeastEnergy: { xIndex: number; cumulativeEnergy: number; }, pixels: Pixel[][]) {
+        let seam = []
         let currentIndexToRemove = pathOfLeastEnergy.xIndex;
         let nextXIndexToRemove;
         for (let y = pixels.length - 1; y >= 0; y--) {
             nextXIndexToRemove = pixels[y][currentIndexToRemove].parentPixelColumnIndex_;
-            pixels[y].splice(currentIndexToRemove, 1);
-            currentIndexToRemove = nextXIndexToRemove;
+            pixels[y].splice(currentIndexToRemove, 1)
+            seam.push({ y, x: currentIndexToRemove })
+            currentIndexToRemove = nextXIndexToRemove
         }
     }
 
     private computeCumulativeEnergy_(pixels: Pixel[][]) {
         pixels.forEach((row, y, array) => {
-            const seam: number[] = []
             return row.forEach((pixel, x) => {
                 if (y === 0) {
                     pixel.cumulativeEnergy = pixel.energy
@@ -107,7 +84,7 @@ export class PgmImage {
                 }
                 north.cumulativeEnergy = array[y - 1][north.xIndex].cumulativeEnergy
 
-                const sortedArray = [northWest, northEast, north].sort((a, b) => a.cumulativeEnergy - b.cumulativeEnergy)
+                const sortedArray = [northWest, north, northEast].sort((a, b) => a.cumulativeEnergy - b.cumulativeEnergy)
                 pixel.cumulativeEnergy = sortedArray[0].cumulativeEnergy + pixel.energy
                 pixel.parentPixelColumnIndex_ = sortedArray[0].xIndex
             })
