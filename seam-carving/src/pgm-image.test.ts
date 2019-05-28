@@ -1,6 +1,6 @@
 import { PgmImage } from './pgm-image';
 
-describe('Seam Carving', () => {
+xdescribe('Seam Carving', () => {
     test('Height 1 & Width 1, -1', () => {
         const input = 
 `P2
