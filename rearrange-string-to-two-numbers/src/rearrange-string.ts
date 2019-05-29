@@ -1,75 +1,105 @@
-export function rearrangeString(input: string): string {
-    const allDigits = Array.from(input)
+export class StringRearranger {
+    private allDigits_: string[]
+    private zeroes_: string[]
+    private otherDigits_: string[]
+    private remainingSpaceInA_ = 0
+    private a_ = ''
+    private b_ = ''
+
+    constructor(input: string) {
+        this.allDigits_ = Array.from(input)
+        this.zeroes_ = this.allDigits_.filter(digit => digit === '0')
+        this.otherDigits_ = this.allDigits_.filter(digit => digit !== '0').sort()
+    }
+
+    rearrangeString(): string {   
+        this.ifPossibleMakeBHave19Digits_()
+
+        this.assignFirstDigitOfA_()
+        this.addZeroesToA_()
+        this.addOtherDigitsToA_()
+
+        this.assignFirstDigitOfB_()
+        this.addZeroesToB_()
+        this.addOtherDigitsToB_()
+
+        this.dealWithInvalidInputs_()
+
+        return `${this.a_} ${this.b_}`
+    }
+
+    private ifPossibleMakeBHave19Digits_() {
+        if (this.otherDigits_[0] === '1' && this.zeroes_.length >= 18) {
+            this.b_ = (10 ** 18).toString();
+            this.zeroes_.splice(0, 18);
+            this.otherDigits_.shift();
+            this.remainingSpaceInA_ = this.allDigits_.length - 19;
+        }
+        else {
+            this.remainingSpaceInA_ = this.allDigits_.length - 18 >= 1 ? this.allDigits_.length - 18 : 1;
+        }
+    }
+
+    private assignFirstDigitOfA_() {
+        if (this.remainingSpaceInA_ === 1 && this.zeroes_.length >= 1) {
+            this.addZeroesToA_();
+        }
+        else if (this.otherDigits_.length > 0) {
+            this.a_ += this.otherDigits_.shift();
+            this.remainingSpaceInA_ -= 1;
+        }
+    }
+
+    private addZeroesToA_() {
+        const zeroesRemaining = this.zeroes_.length;
+        if (zeroesRemaining > 0) {
+            this.a_ += this.zeroes_.splice(0, this.remainingSpaceInA_).join('');
+            this.remainingSpaceInA_ -= Math.min(this.remainingSpaceInA_, zeroesRemaining);
+        }
+    }
+
+    private addOtherDigitsToA_() {
+        this.a_ += this.otherDigits_.splice(0, this.remainingSpaceInA_).join('');
+    }
+
+    private assignFirstDigitOfB_() {
+        if (this.otherDigits_.length > 0) {
+            this.b_ += this.otherDigits_.shift();
+        }
+    }
+
+    private addZeroesToB_() {
+        this.b_ += this.zeroes_.join('');
+    }
+
+    private addOtherDigitsToB_() {
+        this.b_ += this.otherDigits_.join('');
+    }
+
+    private dealWithInvalidInputs_() {
+        if (this.hasLessThanTwoDigits_() || this.aOrBAreTooBig_() || this.hasTooManyZeroes_()) {
+            this.a_ = '-1';
+            this.b_ = '-1';
+        }
+    }
+
+    private hasLessThanTwoDigits_() {
+        return this.allDigits_.length < 2;
+    }
+
+    private aOrBAreTooBig_() {
+        return parseInt(this.a_) > 10 ** 18 || parseInt(this.b_) > 10 ** 18;
+    }   
+
+    private hasTooManyZeroes_() {
+        return (this.a_[0] === '0' && this.a_[1] === '0') || (this.b_[0] === '0' && this.b_[1] === '0');
+    }
+
+     
+
     
-    // Check that we have enough digits
-    if (allDigits.length <= 1) {
-        return '-1 -1'
-    }
 
-    const zeroes = allDigits.filter(digit => digit === '0')
-    const otherDigits = allDigits.filter(digit => digit !== '0').sort()
-    let remainingSpaceInA = 0
+    
 
-    let b = ''
-    // Check if B can have 19 digits    
-    if (otherDigits[0] === '1' && zeroes.length >= 18) {
-        b = (10 ** 18).toString()
-        zeroes.splice(0, 18)
-        otherDigits.shift()
-        remainingSpaceInA = allDigits.length - 19
-    } else {
-        remainingSpaceInA = allDigits.length - 18 >= 1 ? allDigits.length - 18 : 1
-    }
-
-    let a = ''
-    // Minimize A
-    // First digit is the smallest number bigger than 0
-    if (remainingSpaceInA === 1 && zeroes.length >= 1) {
-        ({ a, remainingSpaceInA } = addZeroesToA(zeroes, a, remainingSpaceInA))
-    } else if (otherDigits.length > 0) {
-        a += otherDigits.shift()
-        remainingSpaceInA -= 1
-    }
-
-    // Shove as many zeroes as possible in a without busting remainingSpaceInA
-    ({ a, remainingSpaceInA } = addZeroesToA(zeroes, a, remainingSpaceInA))
-
-    // Fill remaining space of a with the smallest numbers in digits
-    a += otherDigits.splice(0, remainingSpaceInA).join('')
-
-    // Minimize B
-    // First digit is the smallest number bigger than 0
-    if (otherDigits.length > 0) {
-        b += otherDigits.shift()
-    }
-
-    // Shove as many zeroes as possible in b
-        b += zeroes.join('')
-
-    // Fill the rest b with the smallest numbers in digits
-    b += otherDigits.join('')
-
-    // Check to make sure that a or b are not bigger than 10^18
-    if (parseInt(a) > 10**18 || parseInt(b) > 10**18) {
-        return '-1 -1'
-    }
-
-    // Check that we don't have a bunch of zeroes
-    if ((a[0] === '0' && a[1] === '0') || (b[0] === '0' && b[1] === '0')) {
-        return '-1 -1'
-    }
-
-    return `${a} ${b}`
+    
 }
-
-
-
-function addZeroesToA(zeroes: string[], a: string, remainingSpaceInA: number) {
-    const zeroesRemaining = zeroes.length
-    if (zeroesRemaining > 0) {
-        a += zeroes.splice(0, remainingSpaceInA).join('')
-        remainingSpaceInA -= Math.min(remainingSpaceInA, zeroesRemaining)
-    }
-    return { a, remainingSpaceInA }
-}
-

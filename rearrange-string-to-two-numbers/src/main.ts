@@ -1,7 +1,9 @@
-import { rearrangeString } from "./rearrange-string";
+import { /*rearrangeString*/ StringRearranger } from "./rearrange-string";
 
 declare function readline(): string
 
 const S = readline();
 
-console.log(rearrangeString(S))
+const stringRearranger = new StringRearranger(S)
+
+console.log(stringRearranger.rearrangeString())
