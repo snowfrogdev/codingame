@@ -93,13 +93,5 @@ export class StringRearranger {
 
     private hasTooManyZeroes_() {
         return (this.a_[0] === '0' && this.a_[1] === '0') || (this.b_[0] === '0' && this.b_[1] === '0');
-    }
-
-     
-
-    
-
-    
-
-    
+    }    
 }

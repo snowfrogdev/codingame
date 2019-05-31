@@ -1,6 +1,6 @@
 import { StringRearranger } from "./rearrange-string";
 
-describe('Rearrange string to two numbers', () => {
+xdescribe('Rearrange string to two numbers', () => {
     test('Two digits', () => {
         const input = '72'
 
