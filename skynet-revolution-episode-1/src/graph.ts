@@ -1,28 +1,47 @@
-import { booleanLiteral } from "@babel/types";
-
 class Node {
-    private marked_ = false
-    private connectNodes_: number[] = []
-    constructor() {}
-    
-    mark() {
-        this.marked_ = true
+    private isMarked_ = false
+    private isGateway_ = false
+    private previousNode_: Node | undefined
+    private connectNodes_: Node[] = []
+    constructor(private index_: number) {}
+
+    get index() {
+        return this.index_
     }
 
-    isMarked() {
-        return this.marked_
+    get isGateway() {
+        return this.isGateway_
     }
+    set isGateway(value: boolean) {
+        this.isGateway_ = value
+    }
+
+    get previousNode(): Node | undefined {
+        return this.previousNode_
+    }
+    set previousNode(node: Node | undefined) {
+        this.previousNode_ = node
+    }
+    
+    get isMarked() {
+        return this.isMarked_
+    }
+    set isMarked(value: boolean) {
+        this.isMarked_ = value
+    }
+
+    
 
     getConnectNodes() {
-        return this.connectNodes_.values()
+        return this.connectNodes_
     }
 
-    addConnectedNode(connectNode: number) {
+    addConnectedNode(connectNode: Node) {
         this.connectNodes_.push(connectNode)
     }
 
-    removeConnectedNode(connectNode: number) {
-        const nodeIndex = this.connectNodes_.indexOf(connectNode)
+    removeConnectedNode(node: Node) {
+        const nodeIndex = this.connectNodes_.indexOf(node)
         this.connectNodes_.splice(nodeIndex, 1)
     }
 }
@@ -30,46 +49,74 @@ class Node {
 export class Graph {
     private nodes_: Node[]
     constructor(numberOfNodes: number) {
-        this.nodes_ = new Array(numberOfNodes)
-        for (let i = 0; i < numberOfNodes; i++) {
-            this.nodes_[i] = new Node()
-        }
+        this.nodes_ = Array.from(Array(numberOfNodes), (_, index) => new Node(index))
     }
 
     addLink(node1: number, node2: number) {
-        this.nodes_[node1].addConnectedNode(node2)
-        this.nodes_[node2].addConnectedNode(node1)
+        this.nodes_[node1].addConnectedNode(this.nodes_[node2])
+        this.nodes_[node2].addConnectedNode(this.nodes_[node1])
         
     }
 
-    removeLink(node1: number, node2: number) {
-        this.nodes_[1].removeConnectedNode(node2)
-        this.nodes_[2].removeConnectedNode(node1)
+    getNode(index: number) {
+        return this.nodes_[index]
     }
 
-    findBestLinkToRemove(agentsNode: number): [number, number] {
-        const queue: Node[] = [this.nodes_[agentsNode]]
-        this.nodes_[agentsNode].mark()
+    removeLink(node1: number, node2: number) {
+        this.nodes_[node1].removeConnectedNode(this.nodes_[node2])
+        this.nodes_[node2].removeConnectedNode(this.nodes_[node1])
+    }
+
+    findBestLinkToRemove(agentsNodeIndex: number): [number, number] {
+        this.cleanGraph_()
+
+        const startingNode = this.nodes_[agentsNodeIndex]
+        const queue: Node[] = [startingNode]
+        startingNode.isMarked = true
         while(queue.length > 0) {
-            // Process node at index 0 in the queue
-            
-            for (const nodeIndex of queue[0].getConnectNodes()) {
-                const connectedNode = this.nodes_[nodeIndex]
-                if (connectedNode.isMarked()) {
+            const currentNode = queue.shift() as Node
+            if (currentNode.isGateway) {
+                const path = this.recursePath_(currentNode)
+                const secondNodeInPathIndex = path[path.length - 2]
+                return [startingNode.index, secondNodeInPathIndex]
+            }            
+
+            for (const connectedNode of currentNode.getConnectNodes()) {
+                if (!connectedNode.isMarked) {
+                    connectedNode.previousNode = currentNode
                     queue.push(connectedNode)
-                    connectedNode.mark()
+                    connectedNode.isMarked = true
                 }
             }
-            
-            queue.shift()
         }
+        return [-1, -1] // throw new Error('Could not find a gateway')
     }
+
+    private cleanGraph_() {
+        this.nodes_.forEach(node => {
+            node.isMarked = false
+            node.previousNode = undefined
+        })
+    }
+
+    private recursePath_(node: Node, path: number[] = []): number[] {
+        if (!node.previousNode) {
+            path.push(node.index)
+            return path
+        }
+        path.push(node.index)
+        return this.recursePath_(node.previousNode, path)
+    }
+
 }
 
-const graph = new Graph(10)
+/*
+const graph = new Graph(3) //?
+graph.getNode(2).isGateway = true
 
-graph.addLink(0,1)
+graph.addLink(1, 2)
+graph.addLink(1, 0)
 
-graph.addLink(0,2)
 
-graph.findBestLinkToRemove(0)
+graph.findBestLinkToRemove(1) // ?
+*/

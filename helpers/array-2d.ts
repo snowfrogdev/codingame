@@ -51,4 +51,3 @@ export class Array2D<T> extends VanillaArrayConstructor<T[]> {
         return this[heightIndex][widthIndex]
     }
 }
-

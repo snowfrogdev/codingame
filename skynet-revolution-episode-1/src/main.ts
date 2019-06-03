@@ -14,21 +14,18 @@ for (let i = 0; i < L; i++) {
     var inputs = readline().split(' ');
     const N1 = parseInt(inputs[0]); // N1 and N2 defines a link between these nodes
     const N2 = parseInt(inputs[1]);
-    console.error({ N1, N2 })
     network.addLink(N1, N2)
 }
+
 for (let i = 0; i < E; i++) {
     const EI = parseInt(readline()); // the index of a gateway node
+    network.getNode(EI).isGateway = true
 }
-
-console.error(network)
 
 // game loop
 while (true) {
     const SI = parseInt(readline()); // The index of the node on which the Skynet agent is positioned this turn
-
-    
-
-    // Example: 0 1 are the indices of the nodes you wish to sever the link between
-    console.log('0 1');
+    const linkToRemove = network.findBestLinkToRemove(SI)
+    network.removeLink(linkToRemove[0], linkToRemove[1])
+    console.log(`${linkToRemove[0]} ${linkToRemove[1]}`)
 }
