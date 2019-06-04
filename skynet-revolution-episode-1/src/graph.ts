@@ -30,7 +30,7 @@ class Node {
     this.isMarked_ = value;
   }
 
-  getConnectNodes() {
+  getConnectedNodes() {
     return this.connectNodes_;
   }
 
@@ -103,7 +103,7 @@ export class Graph {
   }
 
   private processConnectedNodes_(currentNode: Node, queue: Node[]) {
-    for (const connectedNode of currentNode.getConnectNodes()) {
+    for (const connectedNode of currentNode.getConnectedNodes()) {
       if (!connectedNode.isMarked) {
         connectedNode.previousNode = currentNode;
         queue.push(connectedNode);
