@@ -1,7 +1,7 @@
 import { Array2D } from "./array-2d";
 import { jsxExpressionContainer } from "@babel/types";
 
-describe('Array2D Objects', () => {
+xdescribe('Array2D Objects', () => {
     describe('The Array2D Constructor', () => {
         describe('when called with no arguments', () => {
             test('should create an empty Array2D', () => {
