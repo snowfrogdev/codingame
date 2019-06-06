@@ -8,7 +8,20 @@ export function findClosestNumber(N: string, M: string) {
   } else if (N.length < M.length) {
     resultArray = M.split("").sort((a, b) => Number(a) - Number(b));
   } else {
-    resultArray = recurse(N, resultArray).split("");
+    const result = recurse(N, resultArray);
+    let resultString = result[0];
+    if ( resultString == N){
+      resultArray = [...result[0]];
+    } else
+    {
+    if (result[1]) {
+      resultString = (N[0] ? N[0] : "") + result[0];
+    } else {
+      resultString = result[0];
+    }
+  }
+
+    resultArray = resultString.split("");
   }
 
   const x: number | undefined = resultArray.findIndex(x => x !== "0");
@@ -20,21 +33,41 @@ export function findClosestNumber(N: string, M: string) {
   return result;
 }
 
-function recurse(N: string, resultArray: string[], index = 0): string {
+function recurse(
+  N: string,
+  resultArray: string[],
+  index = 0,
+  currentPrefix = ""
+): [string, boolean] {
+
+  const currentDigit = N[index];
+
   if (!N.length) {
-    return "";
+    return ["", true];
   }
 
-  if (resultArray.includes(N[index])) {
-    return N[index] + recurse(N.slice(index + 1), resultArray, index++); // When recurse returns nextHigher or nextLower we are still addin N[Index] and we shouldn't
+  if (resultArray.includes(currentDigit)) {
+    
+    const result = recurse(
+      N.slice(index + 1),
+      resultArray,
+      index++,
+      currentPrefix + currentDigit
+    );
+    if (result[1]) {
+      return [(currentDigit ? currentDigit : "") + result[0], true];
+    }
+    return [result[0], false];
   } else {
     // compare higher and lower to N to see which one is closest and return that
-    const nextHigherNumber: string = getHigherNumber(N[index], resultArray);
-    const nextLowerNumber: string = getLowerNumber(N[index], resultArray);
-    const BigN = BigInt(N);
+    const nextHigherNumber: string = getHigherNumber(currentDigit, resultArray);
+    const nextLowerNumber: string = getLowerNumber(currentPrefix, currentDigit, resultArray);
+    const BigN = BigInt(currentPrefix + N);
     const HigherDiff = BigInt(nextHigherNumber) - BigN;
     const LowerDiff = BigN - BigInt(nextLowerNumber);
-    return HigherDiff > LowerDiff ? nextLowerNumber : nextHigherNumber;
+    return HigherDiff > LowerDiff
+      ? [nextLowerNumber, false]
+      : [nextHigherNumber, false];
   }
 }
 
@@ -46,12 +79,25 @@ export function getHigherNumber(char: string, resultArray: string[]): string {
   return startNumber + workingArray.join("");
 }
 
-export function getLowerNumber(char: string, resultArray: string[]): string {
+export function getLowerNumber(
+  currentPrefix:string, 
+  char: string, resultArray: string[]): string {
   let workingArray = [...resultArray];
+  workingArray = removeCharactersFromString(workingArray,currentPrefix);
   const startIndex = workingArray.findIndex(x => x < char);
   const startNumber = workingArray.splice(startIndex, 1)[0];
   workingArray.sort((a, b) => Number(b) - Number(a));
-  return startNumber + workingArray.join("");
+  return currentPrefix + startNumber + workingArray.join("");
+}
+
+// TOOD by Phil
+export function removeCharactersFromString(charArray:string[], charactersToRemove:string)
+{
+  [...charactersToRemove].forEach(char => {
+    const index = charArray.indexOf(char)
+    charArray.splice(index, 1);
+  })
+  return charArray;
 }
 
 /*

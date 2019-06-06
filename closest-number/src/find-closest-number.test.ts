@@ -1,7 +1,8 @@
 import {
   findClosestNumber,
   getHigherNumber,
-  getLowerNumber
+  getLowerNumber,
+  removeCharactersFromString
 } from "./find-closest-number";
 
 describe("closest number", () => {
@@ -80,11 +81,23 @@ describe("closest number", () => {
       const M = "17404";
 
       const resultArray = M.split("").sort((a, b) => Number(b) - Number(a));
-      const actual = getLowerNumber("4", resultArray);
+      const actual = getLowerNumber("4", "5", resultArray);
 
-      const expected = "17440";
+      const expected = "44710";
 
       expect(actual).toBe(expected);
+    });
+
+    test("removeCharactersFromString", () => {
+      const charArray = ['1', '4', '6', '8', '9','9']
+      const toRemove = '189'
+
+
+      const actual = removeCharactersFromString(charArray, toRemove)
+
+      const expected = ["4", "6", "9"];
+
+      expect(actual).toEqual(expected);
     });
   });
 });
