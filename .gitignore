@@ -1,6 +1,9 @@
 # Build output
 dist
 
+# VS Code
+.vscode
+
 # Logs
 logs
 *.log
