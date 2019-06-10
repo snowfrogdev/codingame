@@ -1,23 +1,15 @@
 {
-    "name": "helpers",
-    "version": "1.0.0",
-    "main": "dist/helpers.cjs.js",
-    "module": "dist/helpers.esm.js",
-    "browser": "dist/helpers.umd.js",
-    "devDependencies": {
-        "rollup": "^1.0.0",
-        "rollup-plugin-commonjs": "^9.2.0",
-        "rollup-plugin-node-resolve": "^4.0.0",
-        "rollup-plugin-typescript": "^1.0.0",
-        "ts-node": "^7.0.1",
-        "tslib": "^1.9.3",
-        "typescript": "^3.2.2"
-    },
-    "scripts": {
-        "build": "rollup -c",
-        "dev": "rollup -c -w"
-    },
-    "files": [
-        "dist"
-    ]
+  "name": "helpers",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^3.5.1"
+  }
 }
