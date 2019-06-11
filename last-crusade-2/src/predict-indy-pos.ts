@@ -18,8 +18,8 @@ export function predictIndyPos(y: number, x: number, entry: string): IndyPos | n
     throw new Error('Invalid room type');
   }
   
-  if (room[entry]) {
-    return room[entry](+y, +x);
+  if (room.directions[entry]) {
+    return room.directions[entry](+y, +x);
   }
 
   return null  

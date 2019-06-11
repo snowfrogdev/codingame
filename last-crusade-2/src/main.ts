@@ -1,4 +1,5 @@
 import { addLineToGrid, grid, predictIndyPos } from './predict-indy-pos';
+import { roomTypes, Room } from './room-types';
 
 declare function readline(): string;
 
@@ -12,9 +13,9 @@ for (let i = 0; i < H; i++) {
 
 const EX = parseInt(readline()); // the coordinate along the X axis of the exit.
 
-let turnCount = 0;
 // game loop
 while (true) {
+  console.error(grid)
   var inputs = readline().split(' ');
   const XI = parseInt(inputs[0]);
   const YI = parseInt(inputs[1]);
@@ -27,17 +28,17 @@ while (true) {
     const POSR = inputs[2];
   }
 
-  // One line containing on of three commands: 'X Y LEFT', 'X Y RIGHT' or 'WAIT'
+  // One line containing one of three commands: 'X Y LEFT', 'X Y RIGHT' or 'WAIT'
   const IndysNextPos = predictIndyPos(YI, XI, POSI);
   console.error(IndysNextPos)
   if (IndysNextPos) {
     const lookAhead = predictIndyPos(IndysNextPos.y, IndysNextPos.x, IndysNextPos.entry);
     if (!lookAhead) {
+      const indysNextPosRoomType = grid[IndysNextPos.y][IndysNextPos.x]
+      grid[IndysNextPos.y][IndysNextPos.x] = (<number>(<Room>roomTypes.get(+indysNextPosRoomType)).rotateLeft).toString()
       console.log(`${IndysNextPos.x} ${IndysNextPos.y} LEFT`);
       continue;
     }
   }
   console.log('WAIT');
-
-  turnCount++;
 }
