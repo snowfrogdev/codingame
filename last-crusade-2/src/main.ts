@@ -30,9 +30,10 @@ while (true) {
 
   // One line containing one of three commands: 'X Y LEFT', 'X Y RIGHT' or 'WAIT'
   const IndysNextPos = predictIndyPos(YI, XI, POSI);
-  console.error(IndysNextPos);
+  console.error({IndysNextPos});
   if (IndysNextPos) {
     const lookAhead = predictIndyPos(IndysNextPos.y, IndysNextPos.x, IndysNextPos.entry);
+    console.error({lookAhead})
     if (!lookAhead) {
       const indysNextPosRoomType = grid[IndysNextPos.y][IndysNextPos.x];
       grid[IndysNextPos.y][IndysNextPos.x] = (<number>(
@@ -51,6 +52,7 @@ while (true) {
       console.log(`${IndysNextPos.x} ${IndysNextPos.y} RIGHT`);
       continue;
     }
+    console.log('WAIT');
   }
-  console.log('WAIT');
+  // console.log('WAIT');
 }
