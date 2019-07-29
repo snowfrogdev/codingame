@@ -1,0 +1,26 @@
+{
+  "name": "ultimate-tic-tac-toe",
+  "version": "1.0.0",
+  "main": "dist/ultimate-tic-tac-toe.cjs.js",
+  "module": "dist/ultimate-tic-tac-toe.esm.js",
+  "browser": "dist/ultimate-tic-tac-toe.umd.js",
+  "devDependencies": {
+    "jest": "^24.8.0",
+    "rollup": "^1.0.0",
+    "rollup-plugin-commonjs": "^9.2.0",
+    "rollup-plugin-node-resolve": "^4.0.0",
+    "rollup-plugin-typescript": "^1.0.0",
+    "ts-node": "^7.0.1",
+    "tslib": "^1.9.3",
+    "typescript": "^3.2.2"
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "test": "jest"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {}
+}
