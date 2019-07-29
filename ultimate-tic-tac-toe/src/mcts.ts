@@ -12,6 +12,17 @@ type State = Int32Array;
 
 type Action = Int8Array;
 
+const WINS = new Int16Array([
+  0b000000111,
+  0b000111000, // 3 rows
+  0b111000000,
+  0b100100100,
+  0b010010010, // 3 columns
+  0b001001001,
+  0b100010001, // 2 diagonals
+  0b001010100
+]);
+
 function uctSearch(state: State): Action {
   const startTime = performance.now();
   const rootNode = new MCTSNode(state);
@@ -58,42 +69,13 @@ class MCTSNode {
   }
 }
 
-/**
- * ```
- * Board
- * Index 0      : 0b0_0000_000000000_000000000
- * Index 1 - 8  : 0b000000000_000000000
- * bit 22       : 1 = Player X to play, 0 = Player O to play.
- * bits 21 - 18 : Index of valid board for next move, in binary. If > 8 allboards valid.
- * bits 17 - 9  : Position of X tokens.
- * bits 8 - 0   : Position of O tokens.
- * ```
- */
-const board = [
-  0b1_0000_000000000_000000000,
-  0b000000000_000000000,
-  0b000000000_000000000,
-  0b000000000_000000000,
-  0b000000000_000000000,
-  0b000000000_000000000,
-  0b000000000_000000000,
-  0b000000000_000000000,
-  0b000000000_000000000
-];
-
-const action: Action = new Int8Array([8, 4]);
-
-const state = new Int32Array(board);
-const bits = state[0];
-((bits | (bits >> 9)) & 511).toString(2); //?
-
 function getPossibleActions(state: State): Action[] {
-  const boardIndex = (state[0] >> 18) & 15; //?
+  const boardIndex = (state[0] >>> 18) & 15; //?
 }
 
 function applyAction(state: State, action: Action): State {
   const newState: State = new Int32Array(state);
-  const playerIsX = newState[0] & 0x400000;
+  const playerIsX = newState[0] & 0x400000; //bit 22;
   let binaryAction = 1 << action[1];
   if (playerIsX) {
     binaryAction <<= 9;
@@ -101,15 +83,73 @@ function applyAction(state: State, action: Action): State {
   newState[action[0]] |= binaryAction;
 
   // Flip player flag
-  newState[0] ^= 0x400000;
+  newState[0] ^= 0x400000; //bit 22;
 
   // Set nextBoard bits
-  newState[0] |= action[0] << 18;
+  newState[0] |= action[1] << 18;
+
+  // Update MetaBoard
+  if (isDraw(newState[action[0]])) {
+    newState[9] |= (1 << 18) << action[0];
+  }
+  if (hasWon(newState[action[0]], playerIsX)) {
+    if (playerIsX) {
+      newState[9] |= (1 << 9) << action[0]
+    } else {
+      newState[9] |= 1 << action[0]
+    }
+  }
 
   return newState;
 }
+
+/**
+ * ```
+ * Board
+ * Index 9      : Meta board - 0b000000000_000000000_000000000.
+ * Index 0 - 8  : Small boards - 0b000000000_000000000.
+ * bit 23       : 1 = Game Over, 0 = Game Not Over. // Only for index 0.
+ * bit 22       : 1 = Player X to play, 0 = Player O to play. // Only for index 0.
+ * bits 21 - 18 : Index of valid board for next move, in binary. If > 8 allboards valid. / Only for index 0.
+ * bits 26 - 18 : Small boards draws. / Only for index 9.
+ * bits 17 - 9  : Position of X tokens. / Small boards X wins.
+ * bits 8 - 0   : Position of O tokens. / Small boards O wins.
+ * ```
+ */
+const board = [
+  0b0_1_0000_000000000_000000000,
+  0b000000011_001010000,
+  0b000000000_000000000,
+  0b000000000_000000000,
+  0b000000000_000000000,
+  0b000000000_000000000,
+  0b000000000_000000000,
+  0b000000000_000000000,
+  0b000000000_000000000,
+  0b000000000_000000000_000000000
+];
+const state = new Int32Array(board);
+
+const action: Action = new Int8Array([1, 2]);
+
 state;
 
 getPossibleActions(state); //?
 
-applyAction(state, action); //?
+applyAction(state, action) //?
+
+function isDraw(smallBoard: number): boolean {
+  return ((smallBoard | (smallBoard >>> 9)) & 511) === 511;
+}
+
+// Player X > 0, Player O = 0
+function hasWon(smallBoard: number, player: number): boolean {
+  for (const win of WINS) {
+    if (player) {
+      if ((smallBoard & (win << 9)) === win << 9) return true;
+    } else {
+      if ((smallBoard & win) === win) return true;
+    }    
+  }
+  return false;
+}
