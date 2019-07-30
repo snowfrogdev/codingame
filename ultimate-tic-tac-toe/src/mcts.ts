@@ -3,12 +3,13 @@ import { performance } from 'perf_hooks';
 /**
  * ```
  * State
- * Index 9      : Meta board - 0b0_0_0000_000000000_000000000.
- * Index 0 - 8  : Small boards - 0b0_000000000_000000000.
- * bit 23       : 1 = Game Over, 0 = Game Not Over. // Only for index 9.
- * bit 22       : 1 = Player X to play, 0 = Player O to play. // Only for index 9.
- * bits 21 - 18 : Index of valid board for next move, in binary. If > 8 allboards valid. / Only for index 9.
+ * Index 9      : Meta board - 0b000000000_000000000_000000000.
+ * Index 0 - 8  : Small boards - 0b0_0_0000_0_000000000_000000000.
+ * bit 24       : 1 = Game Over, 0 = Game Not Over. // Only for index 0.
+ * bit 23       : 1 = Player X to play, 0 = Player O to play. // Only for index 0.
+ * bits 22 - 19 : Index of valid board for next move, in binary. If > 8 allboards valid. / Only for index 0.
  * bit 18       : 1 = Board is closed / Only for index 0-8.
+ * bit 26 - 18  : Drawn small boards. / Only for index 9.
  * bits 17 - 9  : Position of X tokens. / Small boards X wins.
  * bits 8 - 0   : Position of O tokens. / Small boards O wins.
  * ```
@@ -43,8 +44,7 @@ function uctSearch(state: State): Action {
     const reward = defaultPolicy(newNode.state);
     backupNegaMax(newNode, reward);
   }
-  const bestChild = findBestChild(rootNode, 0);
-  return deduceAction(rootNode.state, bestChild.state);
+  return findBestChild(rootNode, 0).action;
 }
 
 function treePolicy(node: MCTSNode): MCTSNode {
@@ -58,7 +58,9 @@ function treePolicy(node: MCTSNode): MCTSNode {
   return node;
 }
 
-function expand(node: MCTSNode): MCTSNode {}
+function expand(node: MCTSNode): MCTSNode {
+
+}
 
 function findBestChild(node: MCTSNode, exploitationParam: number): MCTSNode {}
 
@@ -66,38 +68,42 @@ function defaultPolicy(state: State): number {}
 
 function backupNegaMax(node: MCTSNode, reward: number): void {}
 
-function deduceAction(startState: State, EndState: State): Action {}
-
 class MCTSNode {
-  private possibleActionsLeftToExpand = [];
+  private possibleActionsLeftToExpand: Action[] = [];
+  private children: MCTSNode[] = [];
   private visits_ = 0;
   private reward_ = 0;
-  constructor(readonly state: State) {}
+  constructor(readonly state: State, readonly action: Action) {}
 
-  get isTerminal(): boolean {}
+  get isTerminal(): boolean {
+    if ((this.state[0] >>> 24) & 1) {
+      return true
+    }
+    return false
+  }
 
   get isFullyExpanded(): boolean {
     return this.possibleActionsLeftToExpand.length === 0;
   }
 }
 
-// TODO: Test this function
 function getPossibleActions(state: State): Action[] {
-  const boardIndex = (state[9] >>> 18) & 15; //?
-  const actions: Action[] = []
+  const boardIndex = (state[0] >>> 19) & 15; //?
+  const actions: Action[] = [];
   // If it's the game's first move or the smallboard is closed
   // All boards are open to play
-  if (boardIndex > 8 || (state[boardIndex] & (1 << 17))) {
+  if (boardIndex > 8 || state[boardIndex] & (1 << 18)) {
+    //Iterate through each small board
     for (let i = 0; i < 9; i++) {
       // Check if board is not closed
-      if (!(state[i] & (1 << 17))) {
-        actions.concat(getSmallBoardActions(state, boardIndex));
+      if (!(state[i] & (1 << 18))) {
+        actions.push(...getSmallBoardActions(state, i));
       }
     }
     return actions;
   }
-  
-  return getSmallBoardActions(state, boardIndex);  
+
+  return getSmallBoardActions(state, boardIndex);
 }
 
 function getSmallBoardActions(state: Int32Array, boardIndex: number): Action[] {
@@ -116,7 +122,7 @@ function getSmallBoardActions(state: Int32Array, boardIndex: number): Action[] {
 
 function applyAction(state: State, action: Action): State {
   const newState: State = new Int32Array(state);
-  const playerIsX = newState[9] & 0x400000; //bit 22;
+  const playerIsX = newState[0] & 0x800000; //bit 23;
   let binaryAction = 1 << action[1];
   if (playerIsX) {
     binaryAction <<= 9;
@@ -124,16 +130,18 @@ function applyAction(state: State, action: Action): State {
   newState[action[0]] |= binaryAction;
 
   // Flip player flag
-  newState[9] ^= 0x400000; //bit 22;
+  newState[0] ^= 0x800000; //bit 23;
 
   // Reset nextBoard bits
-  newState[9] &= ~(0b1111 << 18)
+  newState[0] &= ~(0b1111 << 19);
   // Set nextBoard bits
-  newState[9] |= action[1] << 18;
+  newState[0] |= action[1] << 19;
 
   if (isDraw(newState[action[0]])) {
     // Set closed flag on smallboard
     newState[action[0]] |= 1 << 18;
+    // Set appropriate drawn flag on meta board
+    newState[9] |= (1 << 18) << action[0];
   } else if (hasWon(newState[action[0]], playerIsX)) {
     // Set appropriate won flag on meta board
     if (playerIsX) {
@@ -146,31 +154,17 @@ function applyAction(state: State, action: Action): State {
     newState[action[0]] |= 1 << 18;
   }
 
+  // Check if meta game is a draw and set appropriate bit (24)
+  if (((((state[9] | (state[9] >>> 18)) & 511) | (state[9] >>> 9)) & 511) === 511) {
+    newState[0] |= 1 << 24;
+  } 
+  // Check if meta game has been won and set appropriate bit (24)
+  else if (hasWon(newState[9], playerIsX)) {
+    newState[0] |= 1 << 24;
+  }
+
   return newState;
 }
-
-
-const board = [
-  0b0_000000000_000000000,
-  0b0_000000000_000000011,
-  0b0_001000100_000000001,
-  0b0_000000000_000000000,
-  0b0_000000000_000000000,
-  0b0_000000000_000000000,
-  0b0_000000000_000000000,
-  0b0_000000000_000000000,
-  0b0_000000000_000000000,
-  0b0_0_0010_000000000_000000000
-];
-const state: State = new Int32Array(board);
-
-const action: Action = new Int8Array([1, 2]);
-
-state;
-
-getPossibleActions(state); //?
-
-applyAction(state, action)[9].toString(2) //?
 
 function isDraw(smallBoard: number): boolean {
   return ((smallBoard | (smallBoard >>> 9)) & 511) === 511;
@@ -187,3 +181,29 @@ function hasWon(smallBoard: number, player: number): boolean {
   }
   return false;
 }
+
+/*************************************************************************/
+
+const board = [
+  0b1_1_0000_0_000000000_000000000,
+  0b0_000000000_000000000,
+  0b0_000000000_000000000,
+  0b0_000000000_000000000,
+  0b0_000000000_000000000,
+  0b0_000000000_000000000,
+  0b0_000000000_000000000,
+  0b0_000000000_000000000,
+  0b0_000000000_000000000,
+  0b000000000_000000000_000000000
+];
+const state: State = new Int32Array(board);
+
+const action: Action = new Int8Array([2, 2]);
+
+state;
+
+// getPossibleActions(state) //?
+
+// applyAction(state, action)[0].toString(2); //?
+
+// const node = new MCTSNode(state)
