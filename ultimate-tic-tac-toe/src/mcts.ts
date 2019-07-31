@@ -1,4 +1,5 @@
 import { performance } from 'perf_hooks';
+import { spliceRandom, getRandomIntInclusive } from './utils';
 
 /**
  * ```
@@ -37,14 +38,16 @@ const WINS = new Int16Array([
 ]);
 
 function uctSearch(state: State): Action {
+  // Player X > 0, Player O = 0
+  const player = testBit23(state);
   const startTime = performance.now();
-  const rootNode = new MCTSNode(state);
+  const rootNode = new MCTSNode(state, null);
   while (performance.now() - startTime < 100) {
     const newNode = treePolicy(rootNode);
-    const reward = defaultPolicy(newNode.state);
+    const reward = defaultPolicy(newNode.state, player);
     backupNegaMax(newNode, reward);
   }
-  return findBestChild(rootNode, 0).action;
+  return findBestChild(rootNode, 0).action!;
 }
 
 function treePolicy(node: MCTSNode): MCTSNode {
@@ -59,32 +62,101 @@ function treePolicy(node: MCTSNode): MCTSNode {
 }
 
 function expand(node: MCTSNode): MCTSNode {
-
+  const action = node.chooseUntriedAction();
+  const newState = applyAction(node.state, action);
+  const newNode = new MCTSNode(newState, action);
+  node.addChild(newNode);
+  return newNode;
 }
 
-function findBestChild(node: MCTSNode, exploitationParam: number): MCTSNode {}
+// TODO: test this function once we have implemented Default Policy & Backup Negamax
+function findBestChild(node: MCTSNode, exploitationParam: number): MCTSNode {
+  const children = [...node.children];
+  const sumChildrenVisits = children.reduce((sum, child) => sum + child.visits, 0);
 
-function defaultPolicy(state: State): number {}
+  const bestChild = children.reduce(
+    (bestChildSoFar: { score: number; node: MCTSNode }, child) => {
+      const childScore = computeUCB1Score(child, sumChildrenVisits, exploitationParam);
+      if (bestChildSoFar.score > childScore) {
+        return bestChildSoFar;
+      } else if (bestChildSoFar.score < childScore) {
+        return { score: childScore, node: child };
+      }
+      if (Math.random() >= 0.5) {
+        return bestChildSoFar;
+      }
+      return { score: childScore, node: child };
+    },
+    { score: -Infinity, node: undefined! }
+  );
+
+  return bestChild.node;
+}
+
+function computeUCB1Score(
+  child: MCTSNode,
+  sumChildrenVisits: number,
+  explorationParam: number
+): number {
+  const exploitationTerm = child.reward / child.visits;
+  const explorationTerm = Math.sqrt(Math.log(sumChildrenVisits) / child.visits);
+  return exploitationTerm + explorationParam * explorationTerm;
+}
+
+// TODO: Test this function
+function defaultPolicy(state: State, player: number): number {
+  while (!stateIsTerminal(state)) {
+    const possibleActions = getPossibleActions(state);
+    const index = getRandomIntInclusive(0, possibleActions.length - 1);
+    const action = possibleActions[index];
+    state = applyAction(state, action);
+  }
+
+  if (hasWon(state[9], player)) {
+    return 1;
+  } else if (metaGameIsDraw(state)) {
+    return 0;
+  }
+  return -1;
+}
 
 function backupNegaMax(node: MCTSNode, reward: number): void {}
 
 class MCTSNode {
   private possibleActionsLeftToExpand: Action[] = [];
-  private children: MCTSNode[] = [];
-  private visits_ = 0;
-  private reward_ = 0;
-  constructor(readonly state: State, readonly action: Action) {}
+  private children_: MCTSNode[] = [];
+  readonly visits = 0;
+  readonly reward = 0;
+  constructor(readonly state: State, readonly action: Action | null) {
+    this.possibleActionsLeftToExpand = getPossibleActions(this.state);
+  }
+
+  get children(): IterableIterator<MCTSNode> {
+    return this.children_.values();
+  }
 
   get isTerminal(): boolean {
-    if ((this.state[0] >>> 24) & 1) {
-      return true
-    }
-    return false
+    return stateIsTerminal(this.state);
   }
 
   get isFullyExpanded(): boolean {
     return this.possibleActionsLeftToExpand.length === 0;
   }
+
+  addChild(childNode: MCTSNode): void {
+    this.children_.push(childNode);
+  }
+
+  chooseUntriedAction(): Action {
+    return spliceRandom(this.possibleActionsLeftToExpand);
+  }
+}
+
+function stateIsTerminal(state: State): boolean {
+  if ((state[0] >>> 24) & 1) {
+    return true;
+  }
+  return false;
 }
 
 function getPossibleActions(state: State): Action[] {
@@ -122,7 +194,7 @@ function getSmallBoardActions(state: Int32Array, boardIndex: number): Action[] {
 
 function applyAction(state: State, action: Action): State {
   const newState: State = new Int32Array(state);
-  const playerIsX = newState[0] & 0x800000; //bit 23;
+  const playerIsX = testBit23(newState);
   let binaryAction = 1 << action[1];
   if (playerIsX) {
     binaryAction <<= 9;
@@ -155,15 +227,24 @@ function applyAction(state: State, action: Action): State {
   }
 
   // Check if meta game is a draw and set appropriate bit (24)
-  if (((((state[9] | (state[9] >>> 18)) & 511) | (state[9] >>> 9)) & 511) === 511) {
+  if (metaGameIsDraw(state)) {
     newState[0] |= 1 << 24;
-  } 
+  }
   // Check if meta game has been won and set appropriate bit (24)
   else if (hasWon(newState[9], playerIsX)) {
     newState[0] |= 1 << 24;
   }
 
   return newState;
+}
+
+function metaGameIsDraw(state: Int32Array) {
+  return ((((state[9] | (state[9] >>> 18)) & 511) | (state[9] >>> 9)) & 511) === 511;
+}
+
+// Returns 0 if player is O, otherwise player is X
+function testBit23(newState: Int32Array) {
+  return newState[0] & 0x800000; // bit 23
 }
 
 function isDraw(smallBoard: number): boolean {
@@ -185,9 +266,9 @@ function hasWon(smallBoard: number, player: number): boolean {
 /*************************************************************************/
 
 const board = [
-  0b1_1_0000_0_000000000_000000000,
+  0b1_0_0001_0_000000000_000000000,
   0b0_000000000_000000000,
-  0b0_000000000_000000000,
+  0b0_000000010_000000000,
   0b0_000000000_000000000,
   0b0_000000000_000000000,
   0b0_000000000_000000000,
@@ -198,7 +279,7 @@ const board = [
 ];
 const state: State = new Int32Array(board);
 
-const action: Action = new Int8Array([2, 2]);
+const action: Action = new Int8Array([2, 1]);
 
 state;
 
@@ -207,3 +288,11 @@ state;
 // applyAction(state, action)[0].toString(2); //?
 
 // const node = new MCTSNode(state)
+
+const node = new MCTSNode(state, action);
+
+while (!node.isFullyExpanded) {
+  expand(node);
+}
+
+findBestChild(node);
