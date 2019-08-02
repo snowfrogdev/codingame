@@ -5,6 +5,9 @@
   "module": "dist/ultimate-tic-tac-toe.esm.js",
   "browser": "dist/ultimate-tic-tac-toe.umd.js",
   "devDependencies": {
+    "@babel/plugin-proposal-numeric-separator": "^7.2.0",
+    "@babel/plugin-transform-modules-commonjs": "^7.5.0",
+    "@babel/preset-typescript": "^7.3.3",
     "jest": "^24.8.0",
     "rollup": "^1.0.0",
     "rollup-plugin-commonjs": "^9.2.0",
